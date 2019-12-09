@@ -59,6 +59,8 @@
         <module>reactor</module>
         <module>reactive-streams-operators</module>
         <module>documentation</module>
+
+        <module>vertx-codegen</module>
     </modules>
 
     <properties>
