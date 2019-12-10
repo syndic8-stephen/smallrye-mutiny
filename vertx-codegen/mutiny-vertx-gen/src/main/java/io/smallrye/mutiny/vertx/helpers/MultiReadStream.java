@@ -1,15 +1,16 @@
 package io.smallrye.mutiny.vertx.helpers;
 
-import io.smallrye.mutiny.Multi;
-import io.smallrye.mutiny.helpers.Subscriptions;
-import io.smallrye.mutiny.operators.AbstractMulti;
-import io.vertx.core.streams.ReadStream;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
+import io.smallrye.mutiny.Multi;
+import io.smallrye.mutiny.helpers.Subscriptions;
+import io.smallrye.mutiny.operators.AbstractMulti;
+import io.vertx.core.streams.ReadStream;
 
 public class MultiReadStream<T, U> extends AbstractMulti<U> implements Multi<U> {
     public static final long DEFAULT_MAX_BUFFER_SIZE = 256;

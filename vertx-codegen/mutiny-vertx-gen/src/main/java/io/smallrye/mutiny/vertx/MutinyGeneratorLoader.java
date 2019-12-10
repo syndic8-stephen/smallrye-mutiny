@@ -1,10 +1,11 @@
 package io.smallrye.mutiny.vertx;
 
-import io.vertx.codegen.Generator;
-import io.vertx.codegen.GeneratorLoader;
+import java.util.stream.Stream;
 
 import javax.annotation.processing.ProcessingEnvironment;
-import java.util.stream.Stream;
+
+import io.vertx.codegen.Generator;
+import io.vertx.codegen.GeneratorLoader;
 
 public class MutinyGeneratorLoader implements GeneratorLoader {
     @Override

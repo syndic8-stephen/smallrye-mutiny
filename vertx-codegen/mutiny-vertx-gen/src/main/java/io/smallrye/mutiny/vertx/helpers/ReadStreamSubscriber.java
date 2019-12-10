@@ -1,22 +1,24 @@
 package io.smallrye.mutiny.vertx.helpers;
 
-import io.smallrye.mutiny.Multi;
-import io.vertx.core.Handler;
-import io.vertx.core.streams.ReadStream;
-import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
-
 import java.util.ArrayDeque;
 import java.util.function.Function;
 
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
+
+import io.vertx.core.Handler;
+import io.vertx.core.streams.ReadStream;
+
 public class ReadStreamSubscriber<R, J> implements Subscriber<R>, ReadStream<J> {
 
-    private static final Runnable NOOP_ACTION = () -> {};
+    private static final Runnable NOOP_ACTION = () -> {
+    };
     private static final Throwable DONE_SENTINEL = new Throwable();
 
     public static final int BUFFER_SIZE = 16;
 
-    public static <R, J> ReadStream<J> asReadStream(Multi<R> multi, Function<R, J> adapter) {
+    public static <R, J> ReadStream<J> asReadStream(Publisher<R> multi, Function<R, J> adapter) {
         ReadStreamSubscriber<R, J> actual = new ReadStreamSubscriber<>(adapter);
         multi.subscribe(actual);
         return actual;
