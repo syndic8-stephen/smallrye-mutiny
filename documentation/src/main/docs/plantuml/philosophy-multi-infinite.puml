@@ -1,0 +1,27 @@
+@startuml
+
+skinparam dpi 200
+skinparam useBetaStyle true
+skinparam handwritten true
+skinparam StereotypeFontSize 0
+
+participant "Subscriber" as sub  #D2B4DE
+participant "Processing" as proc #FAE5D3
+participant "Hot Source" as src #D2B4DE
+
+src -> src : item[1]
+src -> src : item[2]
+sub -> proc : subscribe
+proc -> src: subscribe
+src -> proc : subscribed[subscription]
+proc -> sub : subscribed[subscription]
+sub -> proc : request[Long.MAX]
+proc -> src : request[Long.MAX]
+src -> proc: item[3]
+proc -> sub: item[3]
+src -> proc: item[4]
+proc -> sub: item[4]
+src -> proc: item[5]
+proc -> sub: item[5]
+
+@enduml

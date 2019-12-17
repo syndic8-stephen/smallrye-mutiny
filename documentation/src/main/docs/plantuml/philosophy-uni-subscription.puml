@@ -1,0 +1,23 @@
+@startuml
+
+skinparam dpi 200
+skinparam useBetaStyle true
+skinparam handwritten true
+skinparam StereotypeFontSize 0
+
+participant "Subscriber" as sub #D2B4DE
+participant "Processing" as proc #FAE5D3
+participant HttpClient as pub #D2B4DE
+
+sub -> proc: subscribe
+proc -> pub: subscribe
+pub -> proc: subscribed[subscription]
+pub ->  : emit HTTP request
+proc -> sub: subscribed[subscription]
+
+...
+
+pub <- : got HTTP response
+pub -> proc : item[HTTP response]
+proc -> sub : item[HTTP body]
+@enduml

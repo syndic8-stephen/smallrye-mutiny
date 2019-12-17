@@ -127,6 +127,60 @@ You can convert `Unis` to `Multis` and vice-versa:
 include::../../../src/test/java/snippets/UniMultiComparisonTest.java[tags=conversion]
 ----
 
+=== Subscriptions, Requests and Back-pressure
+
+Mantra: Nothing happens if you don't subscribe.
+
+Both `Uni` and `Multi` are lazy, in the sense that the computation, in general, only starts after the _subscription_.
+In the case of `Multi`, _subscription_ is not enough; a _request_ must be emitted.
+
+In the case of `Uni`, a final subscriber must subscribe to the `Uni` to trigger the computation, and _later_ receives the computed item:
+
+[plantuml,align=center]
+----
+include::plantuml/philosophy-uni-subscription.puml[]
+----
+
+In the example presented above, the HTTP client sends the request only when it knows there is someone interested in the response.
+This pattern has several benefits, such as:
+
+1. Save cycles as it would do _stuff_ if there is someone interested
+2. Ease reuse or retry as you only need to re-subscribe
+
+For `Multi`, the subscription is not enough.
+Because the `Multi` may convey more than one item, we need to handle _back-pressure_.
+To do this, the subscriber must inform the _upstream_ how many elements it can handle.
+
+[plantuml,align=center]
+----
+include::plantuml/philosophy-multi-subscription.puml[]
+----
+
+In this case, the source of data starts generating/computing/retrieving data only when it gets a _request_, and
+would pause once the number of requests is reached, until the downstream subscriber requests more items.
+
+This only works if the source of data can handle these start/pause/resume cycles.
+These streams are called _cold_ streams. There are like a compact disc. You can start, resume, pause...
+But what about hot streams, something more like a radio?
+A hot stream is a live stream that emits data continuously, like a ticker, or financial market quotes.
+
+In this case, first, late subscribers can miss previously emitted items.
+Also, the live stream may not have the capacity to slow down when subscribers cannot keep up.
+So, each subscriber needs an overflow policy indicating how the items from these live streams are getting handled.
+The following diagram depicts the buffer strategy, putting items in a buffer and emitting the items downstream according to the request protocol.
+
+[plantuml,align=center]
+----
+include::plantuml/philosophy-multi-buffer.puml[]
+----
+
+A subscriber can also request an _infinite_ amount of data to receive the items as soon as they are available, ignoring its capacity to handle them:
+
+[plantuml,align=center]
+----
+include::plantuml/philosophy-multi-infinite.puml[]
+----
+
 === Creating and Subscribing to Unis
 
 There are many way to create instances of `Unis`:
@@ -168,6 +222,5 @@ Mutiny provides the `then` function to structure your pipeline:
 ----
 include::../../../src/test/java/snippets/ThenTest.java[tags=code]
 ----
-
 
 `then` can be used on `Multi` and `Uni` and let you group a set of operations in a logical set.

@@ -1,0 +1,24 @@
+@startuml
+
+skinparam dpi 200
+skinparam useBetaStyle true
+skinparam handwritten true
+skinparam StereotypeFontSize 0
+
+participant "Subscriber" as sub  #D2B4DE
+participant "Processing" as proc #FAE5D3
+participant Source as pub #D2B4DE
+
+sub -> proc : subscribe
+proc -> pub : subscribe
+pub -> proc : subscribed[subscription]
+proc -> sub : subscribed[subscription]
+sub -> proc : request[2]
+proc -> pub : request[2]
+pub -> : start computing data
+...
+pub <- : received data
+pub -> proc : item[...]
+proc -> sub : item[...]
+
+@enduml

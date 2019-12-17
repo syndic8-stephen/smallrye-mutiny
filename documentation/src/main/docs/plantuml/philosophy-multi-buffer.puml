@@ -1,0 +1,32 @@
+@startuml
+
+skinparam dpi 200
+skinparam useBetaStyle true
+skinparam handwritten true
+skinparam StereotypeFontSize 0
+
+participant "Subscriber" as sub  #D2B4DE
+participant "Processing" as proc #FAE5D3
+participant "Buffer Overflow Strategy" as overflow #FAE5D3
+participant "Hot Source" as src #D2B4DE
+
+src -> src : item[1]
+src -> src : item[2]
+sub -> proc : subscribe
+proc -> overflow: subscribe
+overflow -> src : subscribe
+src -> overflow : subscribed[subscription]
+src -> overflow: item[3]
+src -> overflow: item[4]
+overflow -> proc : subscribed[subscription]
+proc -> sub : subscribed[subscription]
+src -> overflow: item[5]
+sub -> proc : request[2]
+proc -> overflow : request[2]
+overflow -> proc: item[3]
+src -> overflow: item[6]
+proc -> sub: item[3]
+overflow -> proc: item[4]
+proc -> sub: item[4]
+
+@enduml
