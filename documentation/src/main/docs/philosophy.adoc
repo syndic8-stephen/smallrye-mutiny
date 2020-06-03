@@ -94,7 +94,7 @@ For example:
 Mutiny is based on two types:
 
 * `Multi` - handle stream of _0..*_ items (potentially unbounded)
-* `Uni` - handle stream of _0..1_ items
+* `Uni` - handle stream of _1_ item
 
 Both `Uni` and `Multi` are asynchronous types.
 They receive and fire events, at anytime.
@@ -109,9 +109,9 @@ Also, having a `Uni` implementing `Publisher` would be a bit like having `Option
 
 In other words, `Uni`:
 
-* can receive at most 1 `item` event, or a `failure` event
-* cannot receive a `completion` event (`null` in the case of 0 item)
-* cannot receive a `request` event
+* can receive 1 `item` event, or a `failure` event
+* would not receive a `completion` event but can receive a `null` item
+* do not handle `request` event
 
 The following snippet shows how you can use `Uni` and `Multi`:
 
