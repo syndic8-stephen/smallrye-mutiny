@@ -11,20 +11,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
-import io.smallrye.mutiny.groups.MultiBroadcast;
-import io.smallrye.mutiny.groups.MultiCollect;
-import io.smallrye.mutiny.groups.MultiConvert;
-import io.smallrye.mutiny.groups.MultiCreate;
-import io.smallrye.mutiny.groups.MultiCreateBy;
-import io.smallrye.mutiny.groups.MultiGroup;
-import io.smallrye.mutiny.groups.MultiOnCompletion;
-import io.smallrye.mutiny.groups.MultiOnEvent;
-import io.smallrye.mutiny.groups.MultiOnFailure;
-import io.smallrye.mutiny.groups.MultiOnItem;
-import io.smallrye.mutiny.groups.MultiOnSubscribe;
-import io.smallrye.mutiny.groups.MultiOverflow;
-import io.smallrye.mutiny.groups.MultiSubscribe;
-import io.smallrye.mutiny.groups.MultiTransform;
+import io.smallrye.mutiny.groups.*;
 
 @SuppressWarnings("PublisherImplementation")
 public interface Multi<T> extends Publisher<T> {
@@ -413,4 +400,6 @@ public interface Multi<T> extends Publisher<T> {
     default <O> Multi<O> concatMap(Function<? super T, ? extends Publisher<? extends O>> mapper) {
         return onItem().transformToMultiAndConcatenate(mapper);
     }
+
+    MultiOnTerminate<T> onTermination();
 }

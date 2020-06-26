@@ -581,4 +581,6 @@ public interface Uni<T> {
      * @return the object to configure the repeating behavior.
      */
     UniRepeat<T> repeat();
+
+    UniOnTerminate<T> onTermination();
 }
