@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.reactivestreams.Subscription;
 import org.testng.annotations.Test;
 
+import io.smallrye.mutiny.CompositeException;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.test.MultiAssertSubscriber;
@@ -205,11 +206,118 @@ public class MultiOnTerminationUniInvokeTest {
     }
 
     @Test
+    public void testTerminationWhenErrorIsEmittedButUniInvokeIsFailed() {
+        MultiAssertSubscriber<Object> ts = MultiAssertSubscriber.create();
+
+        AtomicReference<Subscription> subscription = new AtomicReference<>();
+        AtomicReference<Object> item = new AtomicReference<>();
+        AtomicReference<Throwable> failure = new AtomicReference<>();
+        AtomicBoolean completion = new AtomicBoolean();
+        AtomicLong requests = new AtomicLong();
+        AtomicBoolean cancellation = new AtomicBoolean();
+
+        AtomicBoolean termination = new AtomicBoolean();
+        AtomicReference<Throwable> terminationException = new AtomicReference<>();
+        AtomicBoolean terminationCancelledFlag = new AtomicBoolean();
+
+        Multi.createFrom().failure(new IOException("boom"))
+                .onSubscribe().invoke(subscription::set)
+                .on().item().invoke(item::set)
+                .on().failure().invoke(failure::set)
+                .on().completion(() -> completion.set(true))
+                .onTermination().invokeUni((t, c) -> {
+                    termination.set(true);
+                    terminationException.set(t);
+                    terminationCancelledFlag.set(c);
+                    return Uni.createFrom().failure(new RuntimeException("tada"));
+                })
+                .on().request(requests::set)
+                .on().cancellation(() -> cancellation.set(true))
+                .subscribe(ts);
+
+        ts
+                .request(20)
+                .assertHasNotReceivedAnyItem()
+                .assertHasFailedWith(CompositeException.class, "boom");
+
+        assertThat(ts.failures()).hasSize(1);
+        CompositeException compositeException = (CompositeException) ts.failures().get(0);
+        assertThat(compositeException.getCauses()).hasSize(2);
+        assertThat(compositeException.getCauses().get(0)).isInstanceOf(IOException.class).hasMessage("boom");
+        assertThat(compositeException.getCauses().get(1)).isInstanceOf(RuntimeException.class).hasMessage("tada");
+
+        assertThat(subscription.get()).isNotNull();
+        assertThat(item.get()).isNull();
+        assertThat(failure.get()).isNotNull().isInstanceOf(IOException.class).hasMessageContaining("boom");
+        assertThat(completion.get()).isFalse();
+        assertThat(requests.get()).isEqualTo(0L);
+        assertThat(cancellation.get()).isFalse();
+
+        assertThat(termination.get()).isTrue();
+        assertThat(terminationException.get()).isNotNull().isInstanceOf(IOException.class).hasMessageContaining("boom");
+        assertThat(terminationCancelledFlag.get()).isFalse();
+    }
+
+    @Test
+    public void testTerminationWhenErrorIsEmittedButUniInvokeThrowsException() {
+        MultiAssertSubscriber<Object> ts = MultiAssertSubscriber.create();
+
+        AtomicReference<Subscription> subscription = new AtomicReference<>();
+        AtomicReference<Object> item = new AtomicReference<>();
+        AtomicReference<Throwable> failure = new AtomicReference<>();
+        AtomicBoolean completion = new AtomicBoolean();
+        AtomicLong requests = new AtomicLong();
+        AtomicBoolean cancellation = new AtomicBoolean();
+
+        AtomicBoolean termination = new AtomicBoolean();
+        AtomicReference<Throwable> terminationException = new AtomicReference<>();
+        AtomicBoolean terminationCancelledFlag = new AtomicBoolean();
+
+        Multi.createFrom().failure(new IOException("boom"))
+                .onSubscribe().invoke(subscription::set)
+                .on().item().invoke(item::set)
+                .on().failure().invoke(failure::set)
+                .on().completion(() -> completion.set(true))
+                .onTermination().invokeUni((t, c) -> {
+                    termination.set(true);
+                    terminationException.set(t);
+                    terminationCancelledFlag.set(c);
+                    throw new RuntimeException("tada");
+                })
+                .on().request(requests::set)
+                .on().cancellation(() -> cancellation.set(true))
+                .subscribe(ts);
+
+        ts
+                .request(20)
+                .assertHasNotReceivedAnyItem()
+                .assertHasFailedWith(CompositeException.class, "boom");
+
+        assertThat(ts.failures()).hasSize(1);
+        CompositeException compositeException = (CompositeException) ts.failures().get(0);
+        assertThat(compositeException.getCauses()).hasSize(2);
+        assertThat(compositeException.getCauses().get(0)).isInstanceOf(IOException.class).hasMessage("boom");
+        assertThat(compositeException.getCauses().get(1)).isInstanceOf(RuntimeException.class).hasMessage("tada");
+
+        assertThat(subscription.get()).isNotNull();
+        assertThat(item.get()).isNull();
+        assertThat(failure.get()).isNotNull().isInstanceOf(IOException.class).hasMessageContaining("boom");
+        assertThat(completion.get()).isFalse();
+        assertThat(requests.get()).isEqualTo(0L);
+        assertThat(cancellation.get()).isFalse();
+
+        assertThat(termination.get()).isTrue();
+        assertThat(terminationException.get()).isNotNull().isInstanceOf(IOException.class).hasMessageContaining("boom");
+        assertThat(terminationCancelledFlag.get()).isFalse();
+    }
+
+    @Test
     public void testTerminationWithCancellation() {
         MultiAssertSubscriber<Integer> ts = MultiAssertSubscriber.create();
 
         AtomicReference<Integer> item = new AtomicReference<>();
         AtomicBoolean cancellation = new AtomicBoolean();
+        AtomicBoolean subCancellation = new AtomicBoolean();
 
         AtomicBoolean termination = new AtomicBoolean();
         AtomicReference<Throwable> terminationException = new AtomicReference<>();
@@ -221,7 +329,7 @@ public class MultiOnTerminationUniInvokeTest {
                     termination.set(true);
                     terminationException.set(t);
                     terminationCancelledFlag.set(c);
-                    return Uni.createFrom().item(100);
+                    return Uni.createFrom().item(100).on().cancellation(() -> subCancellation.set(true));
                 })
                 .on().cancellation(() -> cancellation.set(true))
                 .subscribe(ts);
@@ -232,6 +340,7 @@ public class MultiOnTerminationUniInvokeTest {
 
         assertThat(item.get()).isNull();
         assertThat(cancellation.get()).isTrue();
+        assertThat(subCancellation.get()).isFalse();
         assertThat(termination.get()).isTrue();
         assertThat(terminationException.get()).isNull();
         assertThat(terminationCancelledFlag.get()).isTrue();
